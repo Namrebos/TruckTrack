@@ -9,27 +9,21 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
 
   const today = new Date().toLocaleDateString('en-GB');
 
+  const existing = JSON.parse(localStorage.getItem('truckEntries')) || [];
+  const truckEntries = existing
+    .filter(entry => entry.truck === truck)
+    .sort((a, b) => new Date(a.date.split('/').reverse().join('/')) - new Date(b.date.split('/').reverse().join('/')));
+  const lastEntry = truckEntries[truckEntries.length - 1];
+  const lastOdometer = lastEntry ? Number(lastEntry.odometer) : null;
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const newOdometer = Number(odometer);
-    const existing = JSON.parse(localStorage.getItem('truckEntries')) || [];
 
-    const truckEntries = existing
-      .filter(entry => entry.truck === truck)
-      .sort((a, b) => new Date(a.date.split('/').reverse().join('/')) - new Date(b.date.split('/').reverse().join('/')));
-
-    const lastEntry = truckEntries[truckEntries.length - 1];
-    let drivenToday = 0;
-
-    if (lastEntry) {
-      const prevOdo = Number(lastEntry.odometer);
-      if (newOdometer < prevOdo) {
-        setError(`❌ Today's odometer (${newOdometer}) cannot be less than previous (${prevOdo})`);
-        return;
-      }
-      drivenToday = newOdometer - prevOdo;
-      setKmDriven(drivenToday);
+    if (lastOdometer !== null && newOdometer < lastOdometer) {
+      setError(`❌ Šodienas odometra rādījums (${newOdometer}) nedrīkst būt mazāks par iepriekšējo (${lastOdometer})`);
+      return;
     }
 
     const newEntry = {
@@ -39,6 +33,9 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
       fuel: fuel || 'not refueled',
       driver: user.username
     };
+
+    const drivenToday = lastOdometer !== null ? newOdometer - lastOdometer : null;
+    if (drivenToday !== null) setKmDriven(drivenToday);
 
     existing.push(newEntry);
     localStorage.setItem('truckEntries', JSON.stringify(existing));
@@ -97,6 +94,9 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
 
       <h2 style={{ textAlign: 'center' }}>Šodienas rādījumi {truck}</h2>
       <div><strong>Datums:</strong> {today}</div>
+      {lastOdometer !== null && (
+        <div><strong>Maiņu sākot ODO:</strong> <strong>{lastOdometer} km</strong></div>
+      )}
 
       <label>
         Odometers (km):
