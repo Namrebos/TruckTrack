@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const trucks = ['HK8643', 'RO3201', 'MU466'];
 
@@ -56,6 +58,31 @@ export default function AdminDashboard() {
 
   const avgConsumption =
     totalKm && totalFuel ? (totalFuel / totalKm) * 100 : null;
+
+  const handleExport = () => {
+    const exportData = filteredEntries.map((entry) => ({
+      Datums: entry.date,
+      OdometraRādījums: entry.odometer,
+      Degviela: entry.fuel,
+      Vadītājs: capitalize(entry.driver)
+    }));
+
+    // Pievienojam kopsavilkuma rindu
+    exportData.push({
+      Datums: 'Kopā:',
+      OdometraRādījums: totalKm !== null ? `${totalKm.toFixed(1)} km` : '-',
+      Degviela: `${totalFuel.toFixed(2)} L`,
+      Vadītājs: avgConsumption ? `${avgConsumption.toFixed(2)} L/100km` : '-'
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${activeTab}_${selectedMonth}`);
+
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, `${activeTab}_${selectedMonth}.xlsx`);
+  };
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', position: 'relative' }}>
@@ -139,16 +166,30 @@ export default function AdminDashboard() {
               ))}
               <tr style={{ fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
                 <td>Kopā:</td>
-                <td>{totalKm ?? '-'}km</td>
-                <td>{totalFuel.toFixed(2)}L</td>
-                <td>
-                  {avgConsumption ? `${avgConsumption.toFixed(2)} L/100km` : '-'}
-                </td>
+                <td>{totalKm !== null ? `${totalKm.toFixed(1)} km` : '-'}</td>
+                <td>{totalFuel.toFixed(2)} L</td>
+                <td>{avgConsumption ? `${avgConsumption.toFixed(2)} L/100km` : '-'}</td>
               </tr>
             </>
           )}
         </tbody>
       </table>
+
+      {filteredEntries.length > 0 && (
+        <button
+          onClick={handleExport}
+          style={{
+            marginTop: '20px',
+            padding: '10px 20px',
+            backgroundColor: '#93f783',
+            border: '2px solid black',
+            borderRadius: '6px',
+            cursor: 'pointer',
+          }}
+        >
+          Exportēt uz Excel
+        </button>
+      )}
     </div>
   );
 }
