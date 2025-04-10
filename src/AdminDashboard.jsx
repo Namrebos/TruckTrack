@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 
-const trucks = ['MAN', 'RO3201', 'MU466'];
+const trucks = ['HK8643', 'RO3201', 'MU466'];
 
 function getMonthYearOptions() {
   return [
-    ['April 2025', '04-2025'],
-    ['March 2025', '03-2025'],
-    ['February 2025', '02-2025'],
-    ['January 2025', '01-2025'],
-    ['December 2024', '12-2024'],
-    ['November 2024', '11-2024'],
-    ['October 2024', '10-2024'],
-    ['September 2024', '09-2024'],
-    ['August 2024', '08-2024'],
-    ['July 2024', '07-2024'],
-    ['June 2024', '06-2024'],
-    ['May 2024', '05-2024']
+    ['Aprīlis 2025', '04-2025'],
+    ['Marts 2025', '03-2025'],
+    ['Februāris 2025', '02-2025'],
+    ['Janvāris 2025', '01-2025'],
+    ['Decembris 2024', '12-2024'],
+    ['Novembris 2024', '11-2024'],
+    ['Oktobris 2024', '10-2024'],
+    ['Septembris 2024', '09-2024'],
+    ['Augusts 2024', '08-2024'],
+    ['Jūlijs 2024', '07-2024'],
+    ['Jūnijs 2024', '06-2024'],
+    ['Maijs 2024', '05-2024'],
   ];
 }
 
@@ -24,6 +24,11 @@ function filterEntriesByMonth(entries, selectedMonth) {
     const [day, month, year] = entry.date.split('/');
     return `${month}-${year}` === selectedMonth;
   });
+}
+
+function capitalize(str) {
+  if (!str) return '-';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
 export default function AdminDashboard() {
@@ -37,6 +42,20 @@ export default function AdminDashboard() {
     allEntries.filter((entry) => entry.truck === activeTab),
     selectedMonth
   );
+
+  const totalKm = (() => {
+    const odos = filteredEntries.map(e => parseFloat(e.odometer)).filter(n => !isNaN(n));
+    if (odos.length < 2) return null;
+    return Math.max(...odos) - Math.min(...odos);
+  })();
+
+  const totalFuel = filteredEntries
+    .map(e => parseFloat(e.fuel))
+    .filter(n => !isNaN(n))
+    .reduce((sum, val) => sum + val, 0);
+
+  const avgConsumption =
+    totalKm && totalFuel ? (totalFuel / totalKm) * 100 : null;
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', position: 'relative' }}>
@@ -60,7 +79,7 @@ export default function AdminDashboard() {
         Izlogoties
       </button>
 
-      <h2>Admin Dashboard</h2>
+      <h2>Admin Panelis</h2>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
         {trucks.map((truck) => (
@@ -80,7 +99,7 @@ export default function AdminDashboard() {
 
       <div style={{ marginBottom: '1rem' }}>
         <label>
-          Select month:{" "}
+          Izvēlies mēnesi:{" "}
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
@@ -97,26 +116,36 @@ export default function AdminDashboard() {
       <table border="1" cellPadding="6" cellSpacing="0">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Odometer</th>
-            <th>Fuel</th>
-            <th>Driver</th>
+            <th>Datums</th>
+            <th>Odometrs</th>
+            <th>Degviela</th>
+            <th>Vadītājs</th>
           </tr>
         </thead>
         <tbody>
           {filteredEntries.length === 0 ? (
             <tr>
-              <td colSpan="4">No data for this month</td>
+              <td colSpan="4">Šim mēnesim nav datu</td>
             </tr>
           ) : (
-            filteredEntries.map((entry, index) => (
-              <tr key={index}>
-                <td>{entry.date}</td>
-                <td>{entry.odometer}</td>
-                <td>{entry.fuel}</td>
-                <td>{entry.driver || '-'}</td>
+            <>
+              {filteredEntries.map((entry, index) => (
+                <tr key={index}>
+                  <td>{entry.date}</td>
+                  <td>{entry.odometer}</td>
+                  <td>{entry.fuel}</td>
+                  <td>{capitalize(entry.driver)}</td>
+                </tr>
+              ))}
+              <tr style={{ fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+                <td>Kopā:</td>
+                <td>{totalKm ?? '-'}km</td>
+                <td>{totalFuel.toFixed(2)}L</td>
+                <td>
+                  {avgConsumption ? `${avgConsumption.toFixed(2)} L/100km` : '-'}
+                </td>
               </tr>
-            ))
+            </>
           )}
         </tbody>
       </table>

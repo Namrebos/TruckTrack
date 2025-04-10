@@ -51,15 +51,15 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
         ✅
         {kmDriven !== null && (
           <div style={{ marginTop: '20px' }}>
-            You drove <strong>{kmDriven} km</strong> today
+            Šodien uzveikti <strong>{kmDriven} km</strong>
           </div>
         )}
         <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <button onClick={onChooseAnotherTruck} style={{ padding: '12px 24px' }}>
-            Choose another truck
+            Cits Auto
           </button>
           <button onClick={onLogout} style={{ padding: '12px 24px' }}>
-            Exit
+            Izlogoties
           </button>
         </div>
       </div>
@@ -95,11 +95,11 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
         ← Atpakaļ
       </button>
 
-      <h2 style={{ textAlign: 'center' }}>Daily Entry for {truck}</h2>
-      <div><strong>Date:</strong> {today}</div>
+      <h2 style={{ textAlign: 'center' }}>Šodienas rādījumi {truck}</h2>
+      <div><strong>Datums:</strong> {today}</div>
 
       <label>
-        Odometer (km):
+        Odometers (km):
         <input
           type="number"
           value={odometer}
@@ -109,7 +109,7 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
       </label>
 
       <label>
-        Fuel refilled (liters):
+        Uzpildītā degviela (L):
         <input
           type="number"
           value={fuel}
@@ -121,7 +121,7 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
       {error && <div style={{ color: 'red' }}>{error}</div>}
 
       <button type="submit" style={{ padding: '12px', fontSize: '16px' }}>
-        Submit
+        Apstiprināt
       </button>
     </form>
   );

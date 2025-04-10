@@ -39,7 +39,7 @@ function Login({ onLogin }) {
       <label>
         Username:
         <select value={username} onChange={(e) => setUsername(e.target.value)} required>
-          <option value="">-- Select driver --</option>
+          <option value="">Vadītājs</option>
           <option value="andris">Andris</option>
           <option value="janis">Jānis</option>
           <option value="didzis">Didzis</option>
