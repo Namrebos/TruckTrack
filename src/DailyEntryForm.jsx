@@ -30,7 +30,7 @@ export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLo
       date: today,
       truck,
       odometer: newOdometer,
-      fuel: fuel || 'not refueled',
+      fuel: fuel || '-',
       driver: user.username
     };
 
