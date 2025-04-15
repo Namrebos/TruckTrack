@@ -1,69 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 
-const users = [
-  { username: 'andris', password: '1234', role: 'driver' },
-  { username: 'janis', password: '5678', role: 'driver' },
-  { username: 'didzis', password: '9012', role: 'driver' },
-  { username: 'admin', password: 'adminpass', role: 'admin' },
-];
+const Login = ({ onLogin }) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-function Login({ onLogin }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  useEffect(() => {
+    const existingUsers = localStorage.getItem("users");
+    if (!existingUsers) {
+      const defaultUsers = [
+        { username: "andris", password: "1234", role: "driver" },
+        { username: "janis", password: "1234", role: "driver" },
+        { username: "didzis", password: "1234", role: "driver" },
+        { username: "admin", password: "admin123", role: "admin" }
+      ];
+      localStorage.setItem("users", JSON.stringify(defaultUsers));
+    }
+  }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const found = users.find((u) => u.username === username && u.password === password);
-    if (found) {
-      onLogin(found);
+  const handleLogin = () => {
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    const user = users.find(
+      (u) => u.username === username && u.password === password
+    );
+
+    if (user) {
+      localStorage.setItem("loggedInUser", JSON.stringify(user));
+      onLogin(user); // <- ŠEIT pārslēdzam uz nākamo skatu caur App.jsx
     } else {
-      setError('Invalid username or password');
+      alert("Nepareizs lietotājvārds vai parole.");
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        maxWidth: '400px',
-        margin: '100px auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        fontFamily: 'sans-serif',
-      }}
-    >
-      <h2 style={{ textAlign: 'center' }}>Login</h2>
-
-      <label>
-        Username:
-        <select value={username} onChange={(e) => setUsername(e.target.value)} required>
-          <option value="">Vadītājs</option>
-          <option value="andris">Andris</option>
-          <option value="janis">Jānis</option>
-          <option value="didzis">Didzis</option>
-          <option value="admin">Admin</option>
-        </select>
-      </label>
-
-      <label>
-        Password:
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
-
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-
-      <button type="submit" style={{ padding: '12px', fontSize: '16px' }}>
-        Log In
-      </button>
-    </form>
+    <div className="login">
+      <h2>Pieslēgties</h2>
+      <input
+        type="text"
+        placeholder="Lietotājvārds"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Parole"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button onClick={handleLogin}>Ieiet</button>
+    </div>
   );
-}
+};
 
 export default Login;

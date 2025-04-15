@@ -3,18 +3,20 @@ import Login from './Login';
 import TruckSelector from './TruckSelector';
 import DailyEntryForm from './DailyEntryForm';
 import AdminDashboard from './AdminDashboard';
+import AdminSettings from './AdminSettings';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [selectedTruck, setSelectedTruck] = useState(null);
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('loggedUser'));
+    const storedUser = JSON.parse(localStorage.getItem('loggedInUser'));
     if (storedUser) setUser(storedUser);
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('loggedUser');
+    localStorage.removeItem('loggedInUser');
     setUser(null);
     setSelectedTruck(null);
   };
@@ -23,25 +25,50 @@ const App = () => {
     setSelectedTruck(null);
   };
 
-  if (!user) {
-    return <Login onLogin={setUser} />;
-  }
-
-  if (user.role === 'admin') {
-    return <AdminDashboard onLogout={handleLogout} />;
-  }
-
-  if (!selectedTruck) {
-    return <TruckSelector onSelect={setSelectedTruck} />;
-  }
-
   return (
-    <DailyEntryForm
-      truck={selectedTruck}
-      user={user}
-      onChooseAnotherTruck={handleBackToTrucks}
-      onLogout={handleLogout}
-    />
+    <Routes>
+      <Route
+        path="/"
+        element={
+          !user ? (
+            <Login onLogin={setUser} />
+          ) : user.role === 'admin' ? (
+            <Navigate to="/admin" />
+          ) : !selectedTruck ? (
+            <TruckSelector onSelect={setSelectedTruck} />
+          ) : (
+            <DailyEntryForm
+              truck={selectedTruck}
+              user={user}
+              onChooseAnotherTruck={handleBackToTrucks}
+              onLogout={handleLogout}
+            />
+          )
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          user && user.role === 'admin' ? (
+            <AdminDashboard onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/" />
+          )
+        }
+      />
+
+      <Route
+        path="/admin/settings"
+        element={
+          user && user.role === 'admin' ? (
+            <AdminSettings />
+          ) : (
+            <Navigate to="/" />
+          )
+        }
+      />
+    </Routes>
   );
 };
 
