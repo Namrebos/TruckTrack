@@ -1,128 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Confirmation from './Confirmation';
+import './DailyEntryForm.css';
 
-export default function DailyEntryForm({ truck, user, onChooseAnotherTruck, onLogout }) {
+const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   const [odometer, setOdometer] = useState('');
   const [fuel, setFuel] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState('');
-  const [kmDriven, setKmDriven] = useState(null);
+  const [drivenKm, setDrivenKm] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const today = new Date().toLocaleDateString('en-GB');
+  const date = new Date().toLocaleDateString('lv-LV');
+  const previousEntries = JSON.parse(localStorage.getItem('truckEntries')) || [];
+  const truckEntries = previousEntries.filter(entry => entry.truck === truck);
+  const lastEntry = [...truckEntries].reverse().find(e => e.odometer);
+  const lastOdometer = lastEntry ? Number(lastEntry.odometer) : 0;
 
-  const existing = JSON.parse(localStorage.getItem('truckEntries')) || [];
-  const truckEntries = existing
-    .filter(entry => entry.truck === truck)
-    .sort((a, b) => new Date(a.date.split('/').reverse().join('/')) - new Date(b.date.split('/').reverse().join('/')));
-  const lastEntry = truckEntries[truckEntries.length - 1];
-  const lastOdometer = lastEntry ? Number(lastEntry.odometer) : null;
+  const handleSubmit = () => {
+    if (!odometer) return alert("Ievadi odometra rādījumu!");
+    if (Number(odometer) < lastOdometer) return alert("Odometra rādījums nevar būt mazāks par iepriekšējo!");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const newOdometer = Number(odometer);
-
-    if (lastOdometer !== null && newOdometer < lastOdometer) {
-      setError(`❌ Šodienas odometra rādījums (${newOdometer}) nedrīkst būt mazāks par iepriekšējo (${lastOdometer})`);
-      return;
-    }
-
-    const newEntry = {
-      date: today,
+    const entry = {
       truck,
-      odometer: newOdometer,
-      fuel: fuel || '-',
-      driver: user.username
+      user: user.username,
+      driver: capitalize(user.username),
+      date,
+      odometer,
+      fuel: fuel || '0'
     };
 
-    const drivenToday = lastOdometer !== null ? newOdometer - lastOdometer : null;
-    if (drivenToday !== null) setKmDriven(drivenToday);
+    const updatedEntries = [...previousEntries, entry];
+    localStorage.setItem('truckEntries', JSON.stringify(updatedEntries));
 
-    existing.push(newEntry);
-    localStorage.setItem('truckEntries', JSON.stringify(existing));
-    setSubmitted(true);
+    const kmToday = Number(odometer) - lastOdometer;
+    setDrivenKm(kmToday > 0 ? kmToday : 0);
+    setShowConfirmation(true);
   };
 
-  if (submitted) {
+  const capitalize = (name) => {
+    const mapping = {
+      andris: 'Andris',
+      janis: 'Jānis',
+      didzis: 'Didzis'
+    };
+    return mapping[name.toLowerCase()] || name;
+  };
+
+  if (showConfirmation) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '100px', fontSize: '28px', fontFamily: 'sans-serif' }}>
-        ✅
-        {kmDriven !== null && (
-          <div style={{ marginTop: '20px' }}>
-            Šodien uzveikti <strong>{kmDriven} km</strong>
-          </div>
-        )}
-        <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <button onClick={onChooseAnotherTruck} style={{ padding: '12px 24px' }}>
-            Cits Auto
-          </button>
-          <button onClick={onLogout} style={{ padding: '12px 24px' }}>
-            Izlogoties
-          </button>
-        </div>
-      </div>
+      <Confirmation
+        drivenKm={drivenKm}
+        onChooseAnotherTruck={onChooseAnotherTruck}
+        onLogout={onLogout}
+      />
     );
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        maxWidth: '400px',
-        margin: '100px auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        fontFamily: 'sans-serif',
-      }}
-    >
-      {/* ZAĻĀ ATPAKAĻ POGA */}
-      <button
-        type="button"
-        onClick={onChooseAnotherTruck}
-        style={{
-          backgroundColor: 'green',
-          color: 'white',
-          border: 'none',
-          padding: '0.5rem 1rem',
-          fontSize: '1.2rem',
-          borderRadius: '5px',
-          alignSelf: 'flex-start',
-        }}
-      >
-        ← Atpakaļ
+    <div className="daily-entry-container">
+      <button className="back-button" onClick={onChooseAnotherTruck} aria-label="Atpakaļ">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
       </button>
 
-      <h2 style={{ textAlign: 'center' }}>Šodienas rādījumi {truck}</h2>
-      <div><strong>Datums:</strong> {today}</div>
-      {lastOdometer !== null && (
-        <div><strong>Maiņu sākot ODO:</strong> <strong>{lastOdometer} km</strong></div>
-      )}
+      <h2 className="daily-entry-title">Ievadi Datus</h2>
 
-      <label>
-        Odometers (km):
-        <input
-          type="number"
-          value={odometer}
-          onChange={(e) => setOdometer(e.target.value)}
-          required
-        />
-      </label>
+      <div className="daily-entry-label">Datums: {date}</div>
+      <div className="daily-entry-label">
+        Maiņu sākot ODO: <strong>{lastOdometer} km</strong>
+      </div>
 
-      <label>
-        Uzpildītā degviela (L):
-        <input
-          type="number"
-          value={fuel}
-          onChange={(e) => setFuel(e.target.value)}
-          placeholder="Leave blank if not refueled"
-        />
-      </label>
+      <label className="daily-entry-sub-label">Odometrs (km):</label>
+      <input
+        type="number"
+        className="daily-entry-input"
+        value={odometer}
+        onChange={(e) => setOdometer(e.target.value)}
+        placeholder="Piem. 126500"
+      />
 
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+      <label className="daily-entry-sub-label">Uzpildītā degviela (L):</label>
+      <input
+        type="number"
+        className="daily-entry-input"
+        value={fuel}
+        onChange={(e) => setFuel(e.target.value)}
+        placeholder="Piem. 35.5"
+      />
 
-      <button type="submit" style={{ padding: '12px', fontSize: '16px' }}>
-        Apstiprināt
-      </button>
-    </form>
+      <button className="confirm-button" onClick={handleSubmit}>Apstiprināt</button>
+    </div>
   );
-}
+};
+
+export default DailyEntryForm;

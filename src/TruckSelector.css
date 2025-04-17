@@ -1,0 +1,65 @@
+.truck-selector-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f4f4f4;
+  padding: 1rem;
+}
+
+.truck-selector-title {
+  font-size: 45px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 300px;
+  font-family: 'Doppio One', sans-serif;
+}
+
+.truck-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.truck-buttons button {
+  padding: 1rem;
+  font-size: 20px;
+  font-weight: bold;
+  border: 2px solid #444;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+  font-family: 'Doppio One', sans-serif;
+}
+
+.truck-buttons button:nth-child(1) {
+  background-color: #f5d002; /* Dzeltena MU466 */
+  color: black;
+}
+
+.truck-buttons button:nth-child(2) {
+  background: linear-gradient(120deg, white 33%, red 33%, red 66%, black 66%); /* RO3201 */
+  color: black;
+}
+
+.truck-buttons button:nth-child(3) {
+  background-color: #f75e05; /* Oranžs HK8643 */
+}
+
+.truck-buttons button:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 500px) {
+  .truck-buttons button {
+    font-size: 18px;
+    padding: 1rem;
+  }
+}

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import logo from "./assets/AB Buss.jpg";
+import "./Login.css";
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState("");
@@ -19,35 +21,40 @@ const Login = ({ onLogin }) => {
 
   const handleLogin = () => {
     const users = JSON.parse(localStorage.getItem("users")) || [];
-
-    const user = users.find(
-      (u) => u.username === username && u.password === password
-    );
-
+    const user = users.find(u => u.username === username && u.password === password);
     if (user) {
       localStorage.setItem("loggedInUser", JSON.stringify(user));
-      onLogin(user); // <- ŠEIT pārslēdzam uz nākamo skatu caur App.jsx
+      onLogin(user); // <- svarīgi saglabāt šo!
     } else {
       alert("Nepareizs lietotājvārds vai parole.");
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") handleLogin();
+  };
+
   return (
-    <div className="login">
-      <h2>Pieslēgties</h2>
+    <div className="login-container">
+      <img src={logo} alt="AB Buss Logo" className="login-logo" />
+
       <input
         type="text"
         placeholder="Lietotājvārds"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
+        onKeyDown={handleKeyPress}
+        className="login-input"
       />
       <input
         type="password"
         placeholder="Parole"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={handleKeyPress}
+        className="login-input"
       />
-      <button onClick={handleLogin}>Ieiet</button>
+      <button onClick={handleLogin} className="login-button">Ieiet</button>
     </div>
   );
 };
