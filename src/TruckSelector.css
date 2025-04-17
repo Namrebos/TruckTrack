@@ -26,39 +26,39 @@
   max-width: 300px;
 }
 
-.truck-buttons button {
+.truck-btn {
   padding: 1rem;
   font-size: 20px;
   font-weight: bold;
   border: 2px solid #444;
   border-radius: 8px;
-  color: white;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: background-color 0.3s ease;
   font-family: 'Doppio One', sans-serif;
 }
 
-.truck-buttons button:nth-child(1) {
-  background-color: #f5d002; /* Dzeltena MU466 */
+.mu466 {
+  background-color: #cfb71d;
   color: black;
 }
 
-.truck-buttons button:nth-child(2) {
-  background: linear-gradient(120deg, white 33%, red 33%, red 66%, black 66%); /* RO3201 */
+.ro3201 {
+  background: linear-gradient(120deg, white 33%, red 33%, red 66%, black 66%);
   color: black;
 }
 
-.truck-buttons button:nth-child(3) {
-  background-color: #f75e05; /* Oranžs HK8643 */
+.hk8643 {
+  background-color: #f75e05;
+  color: white;
 }
 
-.truck-buttons button:hover {
+.truck-btn:hover {
   opacity: 0.9;
 }
 
 @media (max-width: 500px) {
-  .truck-buttons button {
+  .truck-btn {
     font-size: 18px;
     padding: 1rem;
   }
