@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Confirmation from './Confirmation';
 import './DailyEntryForm.css';
 
@@ -8,7 +8,10 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   const [drivenKm, setDrivenKm] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const date = new Date().toLocaleDateString('lv-LV');
+  // Formatēts datums kā "dd/mm/yyyy"
+  const now = new Date();
+  const date = now.toLocaleDateString('lv-LV').replace(/\./g, '/');
+
   const previousEntries = JSON.parse(localStorage.getItem('truckEntries')) || [];
   const truckEntries = previousEntries.filter(entry => entry.truck === truck);
   const lastEntry = [...truckEntries].reverse().find(e => e.odometer);
@@ -20,11 +23,10 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
 
     const entry = {
       truck,
-      user: user.username,
-      driver: capitalize(user.username),
       date,
       odometer,
-      fuel: fuel || '0'
+      fuel: fuel || '0',
+      driver: user.username.toLowerCase() // saglabā tikai mazos burtos (andris, janis, didzis)
     };
 
     const updatedEntries = [...previousEntries, entry];
@@ -33,15 +35,6 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
     const kmToday = Number(odometer) - lastOdometer;
     setDrivenKm(kmToday > 0 ? kmToday : 0);
     setShowConfirmation(true);
-  };
-
-  const capitalize = (name) => {
-    const mapping = {
-      andris: 'Andris',
-      janis: 'Jānis',
-      didzis: 'Didzis'
-    };
-    return mapping[name.toLowerCase()] || name;
   };
 
   if (showConfirmation) {
