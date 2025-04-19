@@ -13,12 +13,18 @@ const tabColors = {
 
 function getMonthYearOptions() {
   return [
-    ['April 2025', '04-2025'],
-    ['March 2025', '03-2025'],
-    ['February 2025', '02-2025'],
-    ['January 2025', '01-2025'],
-    ['December 2024', '12-2024'],
-    ['November 2024', '11-2024']
+    ['Aprīlis 2025', '04-2025'],
+    ['Marts 2025', '03-2025'],
+    ['Februāris 2025', '02-2025'],
+    ['Janvāris 2025', '01-2025'],
+    ['Decembris 2024', '12-2024'],
+    ['Novembris 2024', '11-2024'],
+    ['Oktobris 2024', '10-2024'],
+    ['Septembris 2024', '09-2024'],
+    ['Augusts 2024', '08-2024'],
+    ['Jūlijs 2024', '07-2024'],
+    ['Jūnijs 2024', '06-2024'],
+    ['Maijs 2024', '05-2024']
   ];
 }
 
