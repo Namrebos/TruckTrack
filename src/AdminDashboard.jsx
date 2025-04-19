@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import './AdminDashboard.css';
 
-const trucks = ['HK8643', 'RO3201', 'MU466'];
+const trucks = ['MU466', 'RO3201', 'HK8643'];
 
 const tabColors = {
   HK8643: '#f75e05',

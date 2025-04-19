@@ -43,7 +43,7 @@
 }
 
 .admin-tabs button:nth-child(1) {
-  background-color: #f75e05; /* HK8643 - oranža */
+  background-color: #cfb71d; /* MU466 - dzeltena */
 }
 
 .admin-tabs button:nth-child(2) {
@@ -52,7 +52,7 @@
 }
 
 .admin-tabs button:nth-child(3) {
-  background-color: #cfb71d; /* MU466 - dzeltena */
+  background-color: #f75e05; /* HK8643 - oranža */
   color: black;
 }
 
