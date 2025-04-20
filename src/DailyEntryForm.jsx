@@ -8,14 +8,20 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   const [drivenKm, setDrivenKm] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Formatēts datums kā "dd/mm/yyyy"
-  const now = new Date();
-  const date = now.toLocaleDateString('lv-LV').replace(/\./g, '/');
-
+  const date = new Date().toLocaleDateString('lv-LV');
   const previousEntries = JSON.parse(localStorage.getItem('truckEntries')) || [];
+
+  // Filtrē ierakstus tikai izvēlētajam auto
   const truckEntries = previousEntries.filter(entry => entry.truck === truck);
-  const lastEntry = [...truckEntries].reverse().find(e => e.odometer);
-  const lastOdometer = lastEntry ? Number(lastEntry.odometer) : 0;
+
+  // Atrod pēdējo odometra rādījumu pēc datuma (laika gaitā)
+  const sortedByDate = [...truckEntries].sort((a, b) => {
+    const [da, ma, ya] = a.date.split(/[./]/);
+    const [db, mb, yb] = b.date.split(/[./]/);
+    return new Date(`${yb}-${mb}-${db}`) - new Date(`${ya}-${ma}-${da}`);
+  });
+
+  const lastOdometer = sortedByDate.length > 0 ? Number(sortedByDate[sortedByDate.length - 1].odometer) : 0;
 
   const handleSubmit = () => {
     if (!odometer) return alert("Ievadi odometra rādījumu!");
@@ -23,10 +29,11 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
 
     const entry = {
       truck,
+      user: user.username,
+      driver: capitalize(user.username),
       date,
       odometer,
-      fuel: fuel || '0',
-      driver: user.username.toLowerCase() // saglabā tikai mazos burtos (andris, janis, didzis)
+      fuel: fuel || '0'
     };
 
     const updatedEntries = [...previousEntries, entry];
@@ -35,6 +42,15 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
     const kmToday = Number(odometer) - lastOdometer;
     setDrivenKm(kmToday > 0 ? kmToday : 0);
     setShowConfirmation(true);
+  };
+
+  const capitalize = (name) => {
+    const mapping = {
+      andris: 'Andris',
+      janis: 'Jānis',
+      didzis: 'Didzis'
+    };
+    return mapping[name.toLowerCase()] || name;
   };
 
   if (showConfirmation) {

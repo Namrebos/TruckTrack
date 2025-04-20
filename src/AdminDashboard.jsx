@@ -30,7 +30,7 @@ function getMonthYearOptions() {
 
 function filterEntriesByMonth(entries, selectedMonth) {
   return entries.filter(entry => {
-    const [day, month, year] = entry.date.split('/');
+    const [day, month, year] = entry.date.split('.');
     return `${month}-${year}` === selectedMonth;
   });
 }
@@ -42,13 +42,18 @@ export default function AdminDashboard({ onLogout }) {
   const monthOptions = getMonthYearOptions();
   const navigate = useNavigate();
 
-  const filteredEntries = filterEntriesByMonth(
-    allEntries.filter(entry => entry.truck === activeTab),
-    selectedMonth
-  );
+  const truckEntries = allEntries
+    .filter(entry => entry.truck === activeTab)
+    .sort((a, b) => {
+      const [d1, m1, y1] = a.date.split('.').map(Number);
+      const [d2, m2, y2] = b.date.split('.').map(Number);
+      return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2);
+    });
+
+  const filteredEntries = filterEntriesByMonth(truckEntries, selectedMonth);
 
   const totalKm = filteredEntries.reduce((sum, entry, index, arr) => {
-    if (index === 0) return sum;
+    if (index === 0) return 0;
     const prev = parseFloat(arr[index - 1].odometer) || 0;
     const curr = parseFloat(entry.odometer) || 0;
     const diff = curr - prev;
@@ -89,11 +94,12 @@ export default function AdminDashboard({ onLogout }) {
 
   return (
     <div className="admin-container">
-      <button className="admin-settings-btn" onClick={() => navigate('/admin/settings')}>
-        &#9776;
-      </button>
-
-      <h2 className="admin-title">Admin Panelis</h2>
+      <div className="admin-header">
+        <button className="admin-settings-btn" onClick={() => navigate('/admin/settings')}>
+          ☰
+        </button>
+        <h2 className="admin-title">Admin Panelis</h2>
+      </div>
 
       <div className="admin-tabs">
         {trucks.map(truck => (
