@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import './AdminDashboard.css';
-
-const trucks = ['MU466', 'RO3201', 'HK8643'];
 
 const tabColors = {
   HK8643: '#f75e05',
@@ -36,11 +34,24 @@ function filterEntriesByMonth(entries, selectedMonth) {
 }
 
 export default function AdminDashboard({ onLogout }) {
-  const allEntries = JSON.parse(localStorage.getItem('truckEntries')) || [];
-  const [activeTab, setActiveTab] = useState(trucks[0]);
+  const [trucks, setTrucks] = useState([]);
+  const [activeTab, setActiveTab] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(getMonthYearOptions()[0][1]);
   const monthOptions = getMonthYearOptions();
   const navigate = useNavigate();
+
+  const allEntries = JSON.parse(localStorage.getItem('truckEntries')) || [];
+
+  useEffect(() => {
+    const storedTrucks = JSON.parse(localStorage.getItem('trucks')) || [];
+    setTrucks(storedTrucks);
+
+    // Set MU466 as default if exists
+    const defaultTab = storedTrucks.includes('MU466')
+      ? 'MU466'
+      : storedTrucks[0] || null;
+    setActiveTab(defaultTab);
+  }, []);
 
   const truckEntries = allEntries
     .filter(entry => entry.truck === activeTab)
@@ -103,64 +114,70 @@ export default function AdminDashboard({ onLogout }) {
 
       <div className="admin-tabs">
         {trucks.map(truck => (
-          <button key={truck} onClick={() => setActiveTab(truck)}>
+          <button
+            key={truck}
+            onClick={() => setActiveTab(truck)}
+            className={activeTab === truck ? 'active-tab' : ''}
+          >
             {truck}
           </button>
         ))}
       </div>
 
-      <div
-        className="admin-tab-content"
-        style={{ background: tabColors[activeTab] || 'rgba(0,0,0,0.05)' }}
-      >
-        <div className="admin-controls">
-          <label>
-            Mēnesis:
-            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
-              {monthOptions.map(([label, value]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </label>
+      {activeTab && (
+        <div
+          className="admin-tab-content"
+          style={{ background: tabColors[activeTab] || 'rgba(0,0,0,0.05)' }}
+        >
+          <div className="admin-controls">
+            <label>
+              Mēnesis:
+              <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                {monthOptions.map(([label, value]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </label>
 
-          <button onClick={handleExport} className="confirm-button">
-            Exportēt uz Excel
-          </button>
-        </div>
+            <button onClick={handleExport} className="confirm-button">
+              Exportēt uz Excel
+            </button>
+          </div>
 
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Datums</th>
-              <th>Odometrs</th>
-              <th>Degviela</th>
-              <th>Vadītājs</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEntries.length === 0 ? (
-              <tr><td colSpan="4">Nav datu</td></tr>
-            ) : (
-              filteredEntries.map((entry, i) => (
-                <tr key={i}>
-                  <td>{entry.date}</td>
-                  <td>{entry.odometer}</td>
-                  <td>{entry.fuel}</td>
-                  <td>{entry.driver}</td>
-                </tr>
-              ))
-            )}
-            {filteredEntries.length > 0 && (
-              <tr className="admin-summary-row">
-                <td>Kopā</td>
-                <td>{totalKm} km</td>
-                <td>{totalFuel.toFixed(1)} L</td>
-                <td>{avgConsumption} L/100km</td>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Datums</th>
+                <th>Odometrs</th>
+                <th>Degviela</th>
+                <th>Vadītājs</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filteredEntries.length === 0 ? (
+                <tr><td colSpan="4">Nav datu</td></tr>
+              ) : (
+                filteredEntries.map((entry, i) => (
+                  <tr key={i}>
+                    <td>{entry.date}</td>
+                    <td>{entry.odometer}</td>
+                    <td>{entry.fuel}</td>
+                    <td>{entry.driver}</td>
+                  </tr>
+                ))
+              )}
+              {filteredEntries.length > 0 && (
+                <tr className="admin-summary-row">
+                  <td>Kopā</td>
+                  <td>{totalKm} km</td>
+                  <td>{totalFuel.toFixed(1)} L</td>
+                  <td>{avgConsumption} L/100km</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <button onClick={onLogout} className="confirm-button logout" style={{ marginTop: '2rem' }}>
         Iziet no admin
