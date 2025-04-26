@@ -6,13 +6,16 @@ import './AdminDashboard.css';
 
 export default function AdminDashboard({ onLogout }) {
   const navigate = useNavigate();
-
   const [entries, setEntries] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [activeTab, setActiveTab] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(getMonthYearOptions()[0][1]);
 
   useEffect(() => {
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      navigate('/');
+    }
     fetchData();
   }, []);
 

@@ -16,6 +16,10 @@ function AdminSettings() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      navigate('/');
+    }
     fetchTrucks();
     fetchUsers();
   }, []);
@@ -48,7 +52,6 @@ function AdminSettings() {
   const addUser = async () => {
     if (!newUsername || !newPassword) return;
 
-    // 🔒 Šifrējam paroli pirms saglabāšanas
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(newPassword, salt);
 
@@ -72,7 +75,6 @@ function AdminSettings() {
   const updateUserPassword = async (username, newPassword) => {
     if (!newPassword) return;
 
-    // 🔒 Šifrējam jauno paroli
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(newPassword, salt);
 
@@ -91,6 +93,7 @@ function AdminSettings() {
       </button>
       <h2 className="admin-title">Admin Settings</h2>
 
+      {/* --- Truck management --- */}
       <div className="admin-section">
         <h3>Pārvaldīt kravas auto</h3>
         <div className="add-truck-row">
@@ -122,6 +125,7 @@ function AdminSettings() {
         </ul>
       </div>
 
+      {/* --- User management --- */}
       <div className="admin-section">
         <h3>Pārvaldīt lietotājus</h3>
         <div className="add-user-row">
