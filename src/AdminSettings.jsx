@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import './AdminSettings.css';
 import { useNavigate } from 'react-router-dom';
+import bcrypt from 'bcryptjs';
+import './AdminSettings.css';
 
 function AdminSettings() {
   const [trucks, setTrucks] = useState([]);
@@ -46,7 +47,15 @@ function AdminSettings() {
 
   const addUser = async () => {
     if (!newUsername || !newPassword) return;
-    const { error } = await supabase.from('users').insert([{ username: newUsername, password: newPassword, role: newRole }]);
+
+    // 🔒 Šifrējam paroli pirms saglabāšanas
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+    const { error } = await supabase.from('users').insert([
+      { username: newUsername, password: hashedPassword, role: newRole }
+    ]);
+
     if (!error) {
       setNewUsername('');
       setNewPassword('');
@@ -62,7 +71,16 @@ function AdminSettings() {
 
   const updateUserPassword = async (username, newPassword) => {
     if (!newPassword) return;
-    const { error } = await supabase.from('users').update({ password: newPassword }).eq('username', username);
+
+    // 🔒 Šifrējam jauno paroli
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+    const { error } = await supabase
+      .from('users')
+      .update({ password: hashedPassword })
+      .eq('username', username);
+
     if (!error) fetchUsers();
   };
 
@@ -96,7 +114,7 @@ function AdminSettings() {
             <li key={truck.name} className="truck-row">
               <div className="truck-name-group">
                 <div className="color-sample" style={{ background: truck.color }} />
-                <div className="truck-name-text">{truck.name}</div>
+                {truck.name}
               </div>
               <button className="red-btn" onClick={() => deleteTruck(truck.name)}>Dzēst</button>
             </li>

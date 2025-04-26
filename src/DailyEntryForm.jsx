@@ -43,8 +43,8 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
       user: user.username,
       driver: capitalize(user.username),
       date,
-      odometer,
-      fuel: fuel || '0'
+      odometer: parseInt(odometer, 10),
+      fuel: parseInt(fuel, 10) || 0
     };
 
     const { error } = await supabase.from('entries').insert([entry]);
@@ -84,10 +84,11 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   return (
     <div className="daily-entry-container">
       <button className="back-button" onClick={onChooseAnotherTruck} aria-label="Atpakaļ">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <polyline points="15 18 9 12 15 6"></polyline>
+  </svg>
+</button>
+
 
       <h2 className="daily-entry-title">Ievadi Datus</h2>
 
@@ -98,33 +99,30 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
 
       <label className="daily-entry-sub-label">Odometrs (km):</label>
       <input
-        type="number"
+        type="text"
         className="daily-entry-input"
         value={odometer}
-        onChange={(e) => setOdometer(e.target.value)}
-        placeholder="Piem. 126500"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            document.getElementById('fuelInput')?.focus();
+        onChange={(e) => {
+          const value = e.target.value;
+          if (/^\d*$/.test(value)) {
+            setOdometer(value);
           }
         }}
+        placeholder="Piem. 126500"
       />
 
       <label className="daily-entry-sub-label">Uzpildītā degviela (L):</label>
       <input
-        type="number"
-        id="fuelInput"
+        type="text"
         className="daily-entry-input"
         value={fuel}
-        onChange={(e) => setFuel(e.target.value)}
-        placeholder="Piem. 35.5"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSubmit();
+        onChange={(e) => {
+          const value = e.target.value;
+          if (/^\d*$/.test(value)) {
+            setFuel(value);
           }
         }}
+        placeholder="Piem. 35"
       />
 
       <button className="confirm-button" onClick={handleSubmit}>Apstiprināt</button>
