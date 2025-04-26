@@ -1,23 +1,21 @@
-import React from "react";
-import "./DailyEntryForm.css";
+// Confirmation.jsx
+import React from 'react';
+import './Confirmation.css';
 
-const Confirmation = ({ drivenKm, onChooseAnotherTruck, onLogout }) => {
+export default function Confirmation({ drivenKm, onChooseAnotherTruck, onLogout }) {
   return (
-    <div className="daily-entry-container">
-      <h2 className="daily-entry-title">Šodien uzveikti: {drivenKm} km</h2>
-
-      <button className="confirm-button" onClick={onChooseAnotherTruck}>
-        Izvēlēties citu auto
-      </button>
-
-      <button
-        className="confirm-button logout"
-        onClick={onLogout}
-      >
-        Izlogoties
-      </button>
+    <div className="confirmation-container">
+      <h2 className="confirmation-title">Dati saglabāti!</h2>
+      <p className="confirmation-text">Šodien nobraukti: <strong>{drivenKm} km</strong></p>
+      
+      <div className="confirmation-buttons">
+        <button className="confirm-button" onClick={onChooseAnotherTruck}>
+          Izvēlēties citu auto
+        </button>
+        <button className="confirm-button logout" onClick={onLogout}>
+          Iziet
+        </button>
+      </div>
     </div>
   );
-};
-
-export default Confirmation;
+}

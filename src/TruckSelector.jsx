@@ -1,25 +1,22 @@
+// TruckSelector.jsx
 import React, { useEffect, useState } from 'react';
+import { supabase } from './supabaseClient';
 import './TruckSelector.css';
-
-const preferredOrder = ['MU466', 'RO3201', 'HK8643'];
 
 const TruckSelector = ({ onSelect }) => {
   const [trucks, setTrucks] = useState([]);
 
   useEffect(() => {
-    const storedTrucks = JSON.parse(localStorage.getItem('trucks')) || ['HK8643', 'RO3201', 'MU466'];
+    const fetchTrucks = async () => {
+      const { data, error } = await supabase.from('trucks').select('*');
+      if (error) {
+        console.error('Kļūda iegūstot kravas auto sarakstu:', error.message);
+      } else {
+        setTrucks(data.map(t => t.name));
+      }
+    };
 
-    // Saglabā kārtošanu: MU466, RO3201, HK8643, pārējie pēc alfabēta
-    const sorted = [...storedTrucks].sort((a, b) => {
-      const indexA = preferredOrder.indexOf(a);
-      const indexB = preferredOrder.indexOf(b);
-      if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-
-    setTrucks(sorted);
+    fetchTrucks();
   }, []);
 
   return (

@@ -1,28 +1,30 @@
-import React, { useState, useEffect } from 'react';
+// AdminDashboard.jsx
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { supabase } from './supabaseClient';
 import './AdminDashboard.css';
 
 export default function AdminDashboard({ onLogout }) {
   const navigate = useNavigate();
 
-  const [allEntries, setAllEntries] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [activeTab, setActiveTab] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(getMonthYearOptions()[0][1]);
 
   useEffect(() => {
-    const entries = JSON.parse(localStorage.getItem('truckEntries')) || [];
-    const trucksList = JSON.parse(localStorage.getItem('trucks')) || ['MU466', 'RO3201', 'HK8643'];
-    setAllEntries(entries);
-    setTrucks(trucksList);
-    setActiveTab(trucksList[0]);
+    fetchData();
   }, []);
 
-  const tabColors = {
-    HK8643: '#f75e05',
-    RO3201: 'linear-gradient(120deg, white 33%, red 33%, red 66%, black 66%)',
-    MU466: '#cfb71d'
+  const fetchData = async () => {
+    const { data: trucksData } = await supabase.from('trucks').select('*');
+    const { data: entriesData } = await supabase.from('entries').select('*');
+
+    const truckNames = trucksData.map(t => t.name);
+    setTrucks(truckNames);
+    setActiveTab(truckNames[0]);
+    setEntries(entriesData || []);
   };
 
   const monthOptions = getMonthYearOptions();
@@ -33,16 +35,22 @@ export default function AdminDashboard({ onLogout }) {
       ['Marts 2025', '03-2025'],
       ['Februāris 2025', '02-2025'],
       ['Janvāris 2025', '01-2025'],
-      ['Decembris 2024', '12-2024']
+      ['Decembris 2024', '12-2024'],
     ];
   }
 
-  const truckEntries = allEntries
+  const tabColors = {
+    HK8643: '#f75e05',
+    RO3201: 'linear-gradient(120deg, white 33%, red 33%, red 66%, black 66%)',
+    MU466: '#cfb71d',
+  };
+
+  const truckEntries = entries
     .filter(entry => entry.truck === activeTab)
     .sort((a, b) => {
-      const [d1, m1, y1] = a.date.split('.').map(Number);
-      const [d2, m2, y2] = b.date.split('.').map(Number);
-      return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2);
+      const [da, ma, ya] = a.date.split('.');
+      const [db, mb, yb] = b.date.split('.');
+      return new Date(`${ya}-${ma}-${da}`) - new Date(`${yb}-${mb}-${db}`);
     });
 
   const filteredEntries = truckEntries.filter(entry => {
@@ -72,19 +80,20 @@ export default function AdminDashboard({ onLogout }) {
       Datums: entry.date,
       Odometrs: entry.odometer,
       Degviela: entry.fuel,
-      Vadītājs: entry.driver
+      Vadītājs: entry.driver,
     }));
 
     exportData.push({
       Datums: 'Kopā',
       Odometrs: `${totalKm} km`,
       Degviela: `${totalFuel.toFixed(1)} L`,
-      Vadītājs: `${avgConsumption} L/100km`
+      Vadītājs: `${avgConsumption} L/100km`,
     });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
-    const monthName = monthOptions.find(([label, value]) => value === selectedMonth)?.[0] || 'Dati';
+    const monthName =
+      monthOptions.find(([label, value]) => value === selectedMonth)?.[0] || 'Dati';
 
     XLSX.utils.book_append_sheet(workbook, worksheet, monthName);
     XLSX.writeFile(workbook, `${activeTab}_${selectedMonth}.xlsx`);
@@ -100,7 +109,7 @@ export default function AdminDashboard({ onLogout }) {
       </div>
 
       <div className="admin-tabs">
-        {trucks.map(truck => (
+        {trucks.map((truck) => (
           <button
             key={truck}
             onClick={() => setActiveTab(truck)}
@@ -115,9 +124,14 @@ export default function AdminDashboard({ onLogout }) {
         <div className="admin-controls">
           <label>
             Mēnesis:
-            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            >
               {monthOptions.map(([label, value]) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </select>
           </label>
@@ -137,7 +151,9 @@ export default function AdminDashboard({ onLogout }) {
           </thead>
           <tbody>
             {filteredEntries.length === 0 ? (
-              <tr><td colSpan="4">Nav datu</td></tr>
+              <tr>
+                <td colSpan="4">Nav datu</td>
+              </tr>
             ) : (
               filteredEntries.map((entry, i) => (
                 <tr key={i}>
