@@ -103,15 +103,28 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
         value={odometer}
         onChange={(e) => setOdometer(e.target.value)}
         placeholder="Piem. 126500"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('fuelInput')?.focus();
+          }
+        }}
       />
 
       <label className="daily-entry-sub-label">Uzpildītā degviela (L):</label>
       <input
         type="number"
+        id="fuelInput"
         className="daily-entry-input"
         value={fuel}
         onChange={(e) => setFuel(e.target.value)}
         placeholder="Piem. 35.5"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSubmit();
+          }
+        }}
       />
 
       <button className="confirm-button" onClick={handleSubmit}>Apstiprināt</button>

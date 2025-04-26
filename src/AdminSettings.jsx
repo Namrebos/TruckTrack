@@ -71,9 +71,8 @@ function AdminSettings() {
       <button className="back-button" onClick={() => navigate('/admin')}>
         ←
       </button>
-      <h2 className="admin-title">Admin iestatījumi</h2>
+      <h2 className="admin-title">Admin Settings</h2>
 
-      {/* 🚚 Pārvaldīt kravas auto */}
       <div className="admin-section">
         <h3>Pārvaldīt kravas auto</h3>
         <div className="add-truck-row">
@@ -96,7 +95,7 @@ function AdminSettings() {
           {trucks.map(truck => (
             <li key={truck.name} className="truck-row">
               <div className="truck-name-group">
-                <div className="color-sample" style={{ backgroundColor: truck.color }} />
+                <div className="color-sample" style={{ background: truck.color }} />
                 {truck.name}
               </div>
               <button className="red-btn" onClick={() => deleteTruck(truck.name)}>Dzēst</button>
@@ -105,7 +104,6 @@ function AdminSettings() {
         </ul>
       </div>
 
-      {/* 👤 Pārvaldīt lietotājus */}
       <div className="admin-section">
         <h3>Pārvaldīt lietotājus</h3>
         <div className="add-user-row">
@@ -126,7 +124,7 @@ function AdminSettings() {
             value={newRole}
             onChange={(e) => setNewRole(e.target.value)}
           >
-            <option value="driver">Vadītājs</option>
+            <option value="driver">Driver</option>
             <option value="admin">Admin</option>
           </select>
           <button className="green-btn" onClick={addUser}>Pievienot lietotāju</button>

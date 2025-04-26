@@ -26,7 +26,7 @@ const TruckSelector = ({ onSelect }) => {
           <button
             key={truck.name}
             className="truck-btn"
-            style={{ backgroundColor: truck.color || '#cccccc', color: 'black' }}
+            style={{ background: truck.color || '#cccccc', color: 'black' }}
             onClick={() => onSelect(truck.name)}
           >
             {truck.name}

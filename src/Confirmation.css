@@ -10,40 +10,53 @@
 .confirmation-title {
   font-size: 2rem;
   margin-bottom: 1rem;
+  font-family: 'Doppio One', sans-serif;
 }
 
 .confirmation-text {
   font-size: 1.5rem;
   margin-bottom: 2rem;
+  font-family: 'Doppio One', sans-serif;
 }
 
 .confirmation-buttons {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .confirm-button {
-  background-color: #4CAF50;
-  color: white;
   padding: 12px 24px;
   font-size: 18px;
   font-weight: bold;
-  border: none;
+  border: 2px solid black; /* ← Melns rāmis! */
   border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  font-family: 'Doppio One', sans-serif;
+}
+
+/* Zaļā poga - \"Izvēlēties citu auto\" */
+.confirm-button.secondary {
+  background-color: #4CAF50; /* ← Zaļais fons */
+  color: white;
+  border: 2px solid black; /* ← Melns rāmis atkārtoti, drošībai */
+}
+
+/* Sarkana poga - \"Iziet\" */
+.confirm-button.logout {
+  background-color: #d9534f;
+  color: white;
+  border: 2px solid black;
 }
 
 .confirm-button:hover {
-  background-color: #45a049;
-}
-
-.confirm-button.logout {
-  background-color: #d9534f;
+  opacity: 0.9;
 }
 
 .confirm-button.logout:hover {
   background-color: #c9302c;
+  opacity: 0.9;
 }
