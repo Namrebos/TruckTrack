@@ -20,6 +20,9 @@ function AdminSettings() {
     if (!loggedInUser || loggedInUser.role !== 'admin') {
       navigate('/');
     }
+  }, [navigate]);
+
+  useEffect(() => {
     fetchTrucks();
     fetchUsers();
   }, []);
@@ -93,7 +96,6 @@ function AdminSettings() {
       </button>
       <h2 className="admin-title">Admin Settings</h2>
 
-      {/* --- Truck management --- */}
       <div className="admin-section">
         <h3>Pārvaldīt kravas auto</h3>
         <div className="add-truck-row">
@@ -125,7 +127,6 @@ function AdminSettings() {
         </ul>
       </div>
 
-      {/* --- User management --- */}
       <div className="admin-section">
         <h3>Pārvaldīt lietotājus</h3>
         <div className="add-user-row">

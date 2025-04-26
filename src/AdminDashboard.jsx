@@ -1,3 +1,4 @@
+// AdminDashboard.jsx (pilnā salabotā versija)
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
@@ -6,17 +7,20 @@ import './AdminDashboard.css';
 
 export default function AdminDashboard({ onLogout }) {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [entries, setEntries] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [activeTab, setActiveTab] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(getMonthYearOptions()[0][1]);
 
   useEffect(() => {
-    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
-    if (!loggedInUser || loggedInUser.role !== 'admin') {
+    const storedUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (!storedUser || storedUser.role !== 'admin') {
       navigate('/');
+    } else {
+      setUser(storedUser);
+      fetchData();
     }
-    fetchData();
   }, []);
 
   const fetchData = async () => {
