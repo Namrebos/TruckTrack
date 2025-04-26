@@ -96,7 +96,7 @@ function AdminSettings() {
             <li key={truck.name} className="truck-row">
               <div className="truck-name-group">
                 <div className="color-sample" style={{ background: truck.color }} />
-                {truck.name}
+                <div className="truck-name-text">{truck.name}</div>
               </div>
               <button className="red-btn" onClick={() => deleteTruck(truck.name)}>Dzēst</button>
             </li>
