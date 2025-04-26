@@ -1,62 +1,92 @@
-import React, { useState, useEffect } from "react";
-import logo from "./assets/AB Buss.jpg";
-import "./Login.css";
+// Login.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from './supabaseClient';
+import logo from './assets/AB Buss.png'; // Pārliecinies, ka ceļš ir pareizs!
+import './Login.css';
 
-const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+function Login({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
+  const passwordInputRef = useRef(null); // 👉 ref parolei
+
+  // TEST Supabase Connection
   useEffect(() => {
-    const existingUsers = localStorage.getItem("users");
-    if (!existingUsers) {
-      const defaultUsers = [
-        { username: "andris", password: "1234", role: "driver" },
-        { username: "janis", password: "1234", role: "driver" },
-        { username: "didzis", password: "1234", role: "driver" },
-        { username: "admin", password: "admin123", role: "admin" }
-      ];
-      localStorage.setItem("users", JSON.stringify(defaultUsers));
-    }
+    const testSupabaseConnection = async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) {
+        console.error('❌ Supabase SELECT error:', error.message);
+      } else {
+        console.log('✅ Supabase connection OK, users data:', data);
+      }
+    };
+    testSupabaseConnection();
   }, []);
 
-  const handleLogin = () => {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const user = users.find(u => u.username === username && u.password === password);
-    if (user) {
-      localStorage.setItem("loggedInUser", JSON.stringify(user));
-      onLogin(user); // <- svarīgi saglabāt šo!
+  const handleLogin = async () => {
+    if (!username || !password) {
+      setError('Ievadi lietotājvārdu un paroli!');
+      return;
+    }
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .single();
+
+    if (error || !user) {
+      setError('Nepareizs lietotājvārds vai parole');
     } else {
-      alert("Nepareizs lietotājvārds vai parole.");
+      localStorage.setItem('loggedInUser', JSON.stringify(user));
+      onLogin(user);
+      navigate(user.role === 'admin' ? '/admin' : '/select-truck');
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") handleLogin();
+  const handleUsernameKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      passwordInputRef.current?.focus(); // 👉 fokusē uz paroli
+    }
+  };
+
+  const handlePasswordKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleLogin(); // 👉 login kad Enter uz paroles
+    }
   };
 
   return (
     <div className="login-container">
       <img src={logo} alt="AB Buss Logo" className="login-logo" />
-
+      <h2>Autorizācija</h2>
       <input
         type="text"
+        className="login-input"
         placeholder="Lietotājvārds"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        onKeyDown={handleKeyPress}
-        className="login-input"
+        onKeyDown={handleUsernameKeyDown}
       />
       <input
         type="password"
+        className="login-input"
         placeholder="Parole"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        onKeyDown={handleKeyPress}
-        className="login-input"
+        onKeyDown={handlePasswordKeyDown}
+        ref={passwordInputRef}
       />
-      <button onClick={handleLogin} className="login-button">Ieiet</button>
+      {error && <p className="login-error">{error}</p>}
+      <button className="login-button" onClick={handleLogin}>Ieiet</button>
     </div>
   );
-};
+}
 
 export default Login;

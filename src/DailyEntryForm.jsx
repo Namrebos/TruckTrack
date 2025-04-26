@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import Confirmation from './Confirmation';
 import './DailyEntryForm.css';
 
@@ -7,23 +8,33 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   const [fuel, setFuel] = useState('');
   const [drivenKm, setDrivenKm] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [lastOdometer, setLastOdometer] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const date = new Date().toLocaleDateString('lv-LV');
-  const previousEntries = JSON.parse(localStorage.getItem('truckEntries')) || [];
 
-  // Filtrē ierakstus tikai izvēlētajam auto
-  const truckEntries = previousEntries.filter(entry => entry.truck === truck);
+  useEffect(() => {
+    const fetchEntries = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('entries')
+        .select('*')
+        .eq('truck', truck)
+        .order('date', { ascending: true });
 
-  // Atrod pēdējo odometra rādījumu pēc datuma (laika gaitā)
-  const sortedByDate = [...truckEntries].sort((a, b) => {
-    const [da, ma, ya] = a.date.split(/[./]/);
-    const [db, mb, yb] = b.date.split(/[./]/);
-    return new Date(`${yb}-${mb}-${db}`) - new Date(`${ya}-${ma}-${da}`);
-  });
+      if (error) {
+        console.error('❌ Neizdevās ielādēt ierakstus no Supabase:', error.message);
+      } else {
+        const lastEntry = data[data.length - 1];
+        setLastOdometer(lastEntry ? Number(lastEntry.odometer) : 0);
+      }
+      setLoading(false);
+    };
 
-  const lastOdometer = sortedByDate.length > 0 ? Number(sortedByDate[sortedByDate.length - 1].odometer) : 0;
+    fetchEntries();
+  }, [truck]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!odometer) return alert("Ievadi odometra rādījumu!");
     if (Number(odometer) < lastOdometer) return alert("Odometra rādījums nevar būt mazāks par iepriekšējo!");
 
@@ -36,8 +47,13 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
       fuel: fuel || '0'
     };
 
-    const updatedEntries = [...previousEntries, entry];
-    localStorage.setItem('truckEntries', JSON.stringify(updatedEntries));
+    const { error } = await supabase.from('entries').insert([entry]);
+
+    if (error) {
+      console.error('❌ Ieraksta saglabāšana neizdevās:', error.message);
+      alert('Neizdevās saglabāt datus. Mēģini vēlreiz!');
+      return;
+    }
 
     const kmToday = Number(odometer) - lastOdometer;
     setDrivenKm(kmToday > 0 ? kmToday : 0);
@@ -62,6 +78,8 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
       />
     );
   }
+
+  if (loading) return <div className="daily-entry-container"><p>Notiek ielāde...</p></div>;
 
   return (
     <div className="daily-entry-container">
