@@ -1,8 +1,8 @@
-// Login.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import logo from './assets/AB Buss.png'; // Pārliecinies, ka ceļš ir pareizs!
+import bcrypt from 'bcryptjs';
+import logo from './assets/AB Buss.png';
 import './Login.css';
 
 function Login({ onLogin }) {
@@ -10,21 +10,7 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  const passwordInputRef = useRef(null); // 👉 ref parolei
-
-  // TEST Supabase Connection
-  useEffect(() => {
-    const testSupabaseConnection = async () => {
-      const { data, error } = await supabase.from('users').select('*');
-      if (error) {
-        console.error('❌ Supabase SELECT error:', error.message);
-      } else {
-        console.log('✅ Supabase connection OK, users data:', data);
-      }
-    };
-    testSupabaseConnection();
-  }, []);
+  const passwordInputRef = useRef(null);
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -32,33 +18,43 @@ function Login({ onLogin }) {
       return;
     }
 
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('username', username)
-      .eq('password', password)
-      .single();
+    const { data: usersData, error } = await supabase.from('users').select('*');
 
-    if (error || !user) {
-      setError('Nepareizs lietotājvārds vai parole');
-    } else {
-      localStorage.setItem('loggedInUser', JSON.stringify(user));
-      onLogin(user);
-      navigate(user.role === 'admin' ? '/admin' : '/select-truck');
+    if (error || !usersData) {
+      setError('Nevar ielādēt lietotājus.');
+      return;
     }
+
+    const user = usersData.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) {
+      setError('Nepareizs lietotājvārds vai parole');
+      return;
+    }
+
+    // Tikai hash pārbaude
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      setError('Nepareizs lietotājvārds vai parole');
+      return;
+    }
+
+    localStorage.setItem('loggedInUser', JSON.stringify(user));
+    onLogin(user);
+    navigate(user.role === 'admin' ? '/admin' : '/select-truck');
   };
 
   const handleUsernameKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      passwordInputRef.current?.focus(); // 👉 fokusē uz paroli
+      passwordInputRef.current?.focus();
     }
   };
 
   const handlePasswordKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleLogin(); // 👉 login kad Enter uz paroles
+      handleLogin();
     }
   };
 

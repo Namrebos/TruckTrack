@@ -1,4 +1,3 @@
-// TruckSelector.jsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import './TruckSelector.css';
@@ -12,7 +11,7 @@ const TruckSelector = ({ onSelect }) => {
       if (error) {
         console.error('Kļūda iegūstot kravas auto sarakstu:', error.message);
       } else {
-        setTrucks(data.map(t => t.name));
+        setTrucks(data || []);
       }
     };
 
@@ -25,11 +24,12 @@ const TruckSelector = ({ onSelect }) => {
       <div className="truck-buttons">
         {trucks.map((truck) => (
           <button
-            key={truck}
-            className={`truck-btn ${truck.toLowerCase()}`}
-            onClick={() => onSelect(truck)}
+            key={truck.name}
+            className="truck-btn"
+            style={{ background: truck.color || '#cccccc', color: 'black' }}
+            onClick={() => onSelect(truck.name)}
           >
-            {truck}
+            {truck.name}
           </button>
         ))}
       </div>

@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import bcrypt from 'bcryptjs';
 import './AdminSettings.css';
 
-export default function AdminSettings() {
+function AdminSettings() {
   const [trucks, setTrucks] = useState([]);
-  const [users, setUsers] = useState([]);
   const [newTruck, setNewTruck] = useState('');
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'driver' });
-  const [passwordChanges, setPasswordChanges] = useState({});
+  const [truckColor, setTruckColor] = useState('#cccccc');
+  const [users, setUsers] = useState([]);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState('driver');
+
   const navigate = useNavigate();
 
-  // UZLĀDĒ TRUCKS un USERS no SUPABASE
+  useEffect(() => {
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      navigate('/');
+    }
+  }, [navigate]);
+
   useEffect(() => {
     fetchTrucks();
     fetchUsers();
@@ -19,159 +29,154 @@ export default function AdminSettings() {
 
   const fetchTrucks = async () => {
     const { data, error } = await supabase.from('trucks').select('*');
-    if (error) console.error('Kļūda ielādējot kravas auto:', error.message);
-    else setTrucks(data.map(t => t.name));
+    if (!error) setTrucks(data || []);
   };
 
   const fetchUsers = async () => {
     const { data, error } = await supabase.from('users').select('*');
-    if (error) console.error('Kļūda ielādējot lietotājus:', error.message);
-    else setUsers(data);
+    if (!error) setUsers(data || []);
   };
 
-  // AUTO funkcijas
-  const handleAddTruck = async () => {
-    if (!newTruck.trim()) return alert('Ievadi auto numuru!');
-    if (trucks.includes(newTruck)) return alert('Šāds auto jau eksistē!');
-
-    const { error } = await supabase.from('trucks').insert([{ name: newTruck }]);
-    if (error) {
-      alert('Kļūda pievienojot auto: ' + error.message);
-    } else {
+  const addTruck = async () => {
+    if (!newTruck) return;
+    const { error } = await supabase.from('trucks').insert([{ name: newTruck, color: truckColor }]);
+    if (!error) {
       setNewTruck('');
+      setTruckColor('#cccccc');
       fetchTrucks();
     }
   };
 
-  const handleDeleteTruck = async (truck) => {
-    if (!window.confirm(`Vai tiešām dzēst auto ${truck}?`)) return;
-
-    const { error } = await supabase.from('trucks').delete().eq('name', truck);
-    if (error) {
-      alert('Kļūda dzēšot auto: ' + error.message);
-    } else {
-      fetchTrucks();
-    }
+  const deleteTruck = async (truckName) => {
+    const { error } = await supabase.from('trucks').delete().eq('name', truckName);
+    if (!error) fetchTrucks();
   };
 
-  // LIETOTĀJU funkcijas
-  const handleAddUser = async () => {
-    if (!newUser.username || !newUser.password) return alert('Aizpildi visus laukus!');
-    if (users.some(u => u.username === newUser.username)) return alert('Šāds lietotājvārds jau eksistē!');
+  const addUser = async () => {
+    if (!newUsername || !newPassword) return;
 
-    const { error } = await supabase.from('users').insert([newUser]);
-    if (error) {
-      alert('Kļūda pievienojot lietotāju: ' + error.message);
-    } else {
-      setNewUser({ username: '', password: '', role: 'driver' });
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+    const { error } = await supabase.from('users').insert([
+      { username: newUsername, password: hashedPassword, role: newRole }
+    ]);
+
+    if (!error) {
+      setNewUsername('');
+      setNewPassword('');
+      setNewRole('driver');
       fetchUsers();
     }
   };
 
-  const handleDeleteUser = async (username) => {
-    if (!window.confirm(`Vai tiešām dzēst lietotāju ${username}?`)) return;
-
+  const deleteUser = async (username) => {
     const { error } = await supabase.from('users').delete().eq('username', username);
-    if (error) {
-      alert('Kļūda dzēšot lietotāju: ' + error.message);
-    } else {
-      fetchUsers();
-    }
+    if (!error) fetchUsers();
   };
 
-  const handlePasswordChange = async (username) => {
-    const newPassword = passwordChanges[username];
-    if (!newPassword) return alert('Ievadi jaunu paroli!');
+  const updateUserPassword = async (username, newPassword) => {
+    if (!newPassword) return;
+
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
 
     const { error } = await supabase
       .from('users')
-      .update({ password: newPassword })
+      .update({ password: hashedPassword })
       .eq('username', username);
 
-    if (error) {
-      alert('Kļūda mainot paroli: ' + error.message);
-    } else {
-      setPasswordChanges(prev => ({ ...prev, [username]: '' }));
-      fetchUsers();
-    }
+    if (!error) fetchUsers();
   };
 
   return (
     <div className="admin-settings-container">
-      <button className="back-button" onClick={() => navigate('/')}>
+      <button className="back-button" onClick={() => navigate('/admin')}>
         ←
       </button>
+      <h2 className="admin-title">Admin Settings</h2>
 
-      <h2 className="admin-title">Admin iestatījumi</h2>
-
-      {/* Kravas auto sadaļa */}
       <div className="admin-section">
         <h3>Pārvaldīt kravas auto</h3>
         <div className="add-truck-row">
           <input
-            type="text"
             className="admin-input short"
-            placeholder="Jauns auto (piem. AB1234)"
+            placeholder="Auto nosaukums"
             value={newTruck}
             onChange={(e) => setNewTruck(e.target.value)}
           />
-          <button className="green-btn" onClick={handleAddTruck}>Pievienot auto</button>
+          <input
+            type="color"
+            value={truckColor}
+            onChange={(e) => setTruckColor(e.target.value)}
+            className="color-picker"
+          />
+          <button className="green-btn" onClick={addTruck}>Pievienot auto</button>
         </div>
+
         <ul className="truck-list">
-          {trucks.map((truck) => (
-            <li key={truck} className="truck-row">
-              {truck}
-              <button className="green-btn" onClick={() => handleDeleteTruck(truck)}>Dzēst</button>
+          {trucks.map(truck => (
+            <li key={truck.name} className="truck-row">
+              <div className="truck-name-group">
+                <div className="color-sample" style={{ background: truck.color }} />
+                {truck.name}
+              </div>
+              <button className="red-btn" onClick={() => deleteTruck(truck.name)}>Dzēst</button>
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Lietotāju sadaļa */}
       <div className="admin-section">
-        <h3>Lietotāju pārvaldība</h3>
+        <h3>Pārvaldīt lietotājus</h3>
         <div className="add-user-row">
           <input
-            type="text"
             className="admin-input short"
             placeholder="Lietotājvārds"
-            value={newUser.username}
-            onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
           />
           <input
-            type="password"
             className="admin-input short"
             placeholder="Parole"
-            value={newUser.password}
-            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
           />
           <select
             className="admin-input short"
-            value={newUser.role}
-            onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value)}
           >
-            <option value="driver">Vadītājs</option>
-            <option value="admin">Administrators</option>
+            <option value="driver">Driver</option>
+            <option value="admin">Admin</option>
           </select>
-          <button className="green-btn" onClick={handleAddUser}>Pievienot lietotāju</button>
+          <button className="green-btn" onClick={addUser}>Pievienot lietotāju</button>
         </div>
+
         <ul className="user-list">
-          {users.map((u) => (
-            <li key={u.username} className="user-entry">
-              <div><strong>{u.username}</strong> ({u.role})</div>
+          {users.map(user => (
+            <li key={user.username} className="user-entry">
+              {user.username} ({user.role})
               <div className="user-actions">
                 <input
                   type="password"
                   className="admin-input short"
                   placeholder="Jauna parole"
-                  value={passwordChanges[u.username] || ''}
-                  onChange={(e) =>
-                    setPasswordChanges({ ...passwordChanges, [u.username]: e.target.value })
-                  }
+                  onChange={(e) => user.newPassword = e.target.value}
                 />
-                <button className="green-btn" onClick={() => handlePasswordChange(u.username)}>Mainīt paroli</button>
-                {u.username !== 'admin' && (
-                  <button className="green-btn" onClick={() => handleDeleteUser(u.username)}>Dzēst</button>
+                <button
+                  className="green-btn"
+                  onClick={() => updateUserPassword(user.username, user.newPassword)}
+                >
+                  Mainīt paroli
+                </button>
+                {!(user.role === 'admin' && users.filter(u => u.role === 'admin').length === 1) && (
+                  <button
+                    className="red-btn"
+                    onClick={() => deleteUser(user.username)}
+                  >
+                    Dzēst
+                  </button>
                 )}
               </div>
             </li>
@@ -181,3 +186,5 @@ export default function AdminSettings() {
     </div>
   );
 }
+
+export default AdminSettings;

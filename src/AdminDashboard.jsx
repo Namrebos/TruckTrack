@@ -1,4 +1,4 @@
-// AdminDashboard.jsx
+// AdminDashboard.jsx (pilnā salabotā versija)
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
@@ -7,23 +7,30 @@ import './AdminDashboard.css';
 
 export default function AdminDashboard({ onLogout }) {
   const navigate = useNavigate();
-
+  const [user, setUser] = useState(null);
   const [entries, setEntries] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [activeTab, setActiveTab] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(getMonthYearOptions()[0][1]);
 
   useEffect(() => {
-    fetchData();
+    const storedUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (!storedUser || storedUser.role !== 'admin') {
+      navigate('/');
+    } else {
+      setUser(storedUser);
+      fetchData();
+    }
   }, []);
 
   const fetchData = async () => {
     const { data: trucksData } = await supabase.from('trucks').select('*');
     const { data: entriesData } = await supabase.from('entries').select('*');
 
-    const truckNames = trucksData.map(t => t.name);
-    setTrucks(truckNames);
-    setActiveTab(truckNames[0]);
+    setTrucks(trucksData || []);
+    if (trucksData && trucksData.length > 0) {
+      setActiveTab(trucksData[0].name);
+    }
     setEntries(entriesData || []);
   };
 
@@ -38,12 +45,6 @@ export default function AdminDashboard({ onLogout }) {
       ['Decembris 2024', '12-2024'],
     ];
   }
-
-  const tabColors = {
-    HK8643: '#f75e05',
-    RO3201: 'linear-gradient(120deg, white 33%, red 33%, red 66%, black 66%)',
-    MU466: '#cfb71d',
-  };
 
   const truckEntries = entries
     .filter(entry => entry.truck === activeTab)
@@ -99,6 +100,10 @@ export default function AdminDashboard({ onLogout }) {
     XLSX.writeFile(workbook, `${activeTab}_${selectedMonth}.xlsx`);
   };
 
+  const getActiveTruckColor = () => {
+    return trucks.find(t => t.name === activeTab)?.color || '#eee';
+  };
+
   return (
     <div className="admin-container">
       <div className="admin-header">
@@ -111,16 +116,16 @@ export default function AdminDashboard({ onLogout }) {
       <div className="admin-tabs">
         {trucks.map((truck) => (
           <button
-            key={truck}
-            onClick={() => setActiveTab(truck)}
-            style={{ background: tabColors[truck] || '#ddd' }}
+            key={truck.name}
+            onClick={() => setActiveTab(truck.name)}
+            style={{ background: truck.color || '#ddd' }}
           >
-            {truck}
+            {truck.name}
           </button>
         ))}
       </div>
 
-      <div className="admin-tab-content" style={{ background: tabColors[activeTab] || '#eee' }}>
+      <div className="admin-tab-content" style={{ background: getActiveTruckColor() }}>
         <div className="admin-controls">
           <label>
             Mēnesis:
