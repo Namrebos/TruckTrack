@@ -38,6 +38,7 @@ export default function AdminDashboard({ onLogout }) {
 
   function getMonthYearOptions() {
     return [
+      ['Maijs 2025', '05-2025'],
       ['Aprīlis 2025', '04-2025'],
       ['Marts 2025', '03-2025'],
       ['Februāris 2025', '02-2025'],
