@@ -1,9 +1,17 @@
-// AdminDashboard.jsx (pilnā salabotā versija)
-import React, { useEffect, useState } from 'react';
+// AdminDashboard.jsx
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { supabase } from './supabaseClient';
 import './AdminDashboard.css';
+
+function getMonthName(monthIndex) {
+  const monthNames = [
+    'Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs',
+    'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'
+  ];
+  return monthNames[monthIndex];
+}
 
 export default function AdminDashboard({ onLogout }) {
   const navigate = useNavigate();
@@ -11,7 +19,7 @@ export default function AdminDashboard({ onLogout }) {
   const [entries, setEntries] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [activeTab, setActiveTab] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState(getMonthYearOptions()[0][1]);
+  const [selectedMonth, setSelectedMonth] = useState('');
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('loggedInUser'));
@@ -34,18 +42,36 @@ export default function AdminDashboard({ onLogout }) {
     setEntries(entriesData || []);
   };
 
-  const monthOptions = getMonthYearOptions();
+  const monthOptions = useMemo(() => {
+    if (!entries || entries.length === 0) return [];
 
-  function getMonthYearOptions() {
-    return [
-      ['Maijs 2025', '05-2025'],
-      ['Aprīlis 2025', '04-2025'],
-      ['Marts 2025', '03-2025'],
-      ['Februāris 2025', '02-2025'],
-      ['Janvāris 2025', '01-2025'],
-      ['Decembris 2024', '12-2024'],
-    ];
-  }
+    const monthSet = new Set();
+
+    entries.forEach(entry => {
+      const [day, month, year] = entry.date.split('.');
+      if (month && year) {
+        monthSet.add(`${month}-${year}`);
+      }
+    });
+
+    const sortedMonths = Array.from(monthSet).sort((a, b) => {
+      const [ma, ya] = a.split('-');
+      const [mb, yb] = b.split('-');
+      return new Date(`${ya}-${ma}-01`) - new Date(`${yb}-${mb}-01`);
+    });
+
+    return sortedMonths.reverse().map((value) => {
+      const [month, year] = value.split('-');
+      const label = `${getMonthName(parseInt(month, 10) - 1)} ${year}`;
+      return [label, value];
+    });
+  }, [entries]);
+
+  useEffect(() => {
+    if (monthOptions.length > 0 && !selectedMonth) {
+      setSelectedMonth(monthOptions[0][1]);
+    }
+  }, [monthOptions, selectedMonth]);
 
   const truckEntries = entries
     .filter(entry => entry.truck === activeTab)
