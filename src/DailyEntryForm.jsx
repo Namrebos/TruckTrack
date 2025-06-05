@@ -20,7 +20,7 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
         .from('entries')
         .select('*')
         .eq('truck', truck)
-        .order('date', { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error('❌ Neizdevās ielādēt ierakstus no Supabase:', error.message);
@@ -37,6 +37,16 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   const handleSubmit = async () => {
     if (!odometer) return alert("Ievadi odometra rādījumu!");
     if (Number(odometer) < lastOdometer) return alert("Odometra rādījums nevar būt mazāks par iepriekšējo!");
+
+    const kmToday = Number(odometer) - lastOdometer;
+
+    if (kmToday >= 400) {
+      const confirmResult = window.confirm(`🚨 Ievadīts ļoti liels nobraukums (${kmToday} km). Vai esi pārliecināts?`);
+      if (!confirmResult) {
+        setOdometer('');
+        return;
+      }
+    }
 
     const entry = {
       truck,
@@ -55,7 +65,6 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
       return;
     }
 
-    const kmToday = Number(odometer) - lastOdometer;
     setDrivenKm(kmToday > 0 ? kmToday : 0);
     setShowConfirmation(true);
   };
@@ -84,11 +93,10 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   return (
     <div className="daily-entry-container">
       <button className="back-button" onClick={onChooseAnotherTruck} aria-label="Atpakaļ">
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <polyline points="15 18 9 12 15 6"></polyline>
-  </svg>
-</button>
-
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
 
       <h2 className="daily-entry-title">Ievadi Datus</h2>
 
