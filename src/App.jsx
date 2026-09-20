@@ -5,10 +5,11 @@ import TruckSelector from './TruckSelector';
 import DailyEntryForm from './DailyEntryForm';
 import AdminDashboard from './AdminDashboard';
 import AdminSettings from './AdminSettings';
-import { supabase } from './supabaseClient'; // Nepieciešams priekš izlogošanas
+import { api } from './api';
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [selectedTruck, setSelectedTruck] = useState(null);
   const navigate = useNavigate();
 
@@ -24,17 +25,17 @@ const App = () => {
 
   const handleLogout = async () => {
     clearTimeout(timeoutRef.current);
-    await supabase.auth.signOut(); // drošs Supabase logout
-    localStorage.removeItem('loggedInUser');
+    await api.logout().catch(() => {});
     setUser(null);
     setSelectedTruck(null);
     navigate('/');
   };
 
-  // Ielasa user no localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('loggedInUser');
-    if (stored) setUser(JSON.parse(stored));
+    api.session()
+      .then(({ user: sessionUser }) => setUser(sessionUser))
+      .catch(() => setUser(null))
+      .finally(() => setSessionLoading(false));
   }, []);
 
   // Aktivizē auto-logout, kad ir ielogojies
@@ -51,6 +52,8 @@ const App = () => {
     };
   }, [user]);
 
+  if (sessionLoading) return <div />;
+
   return (
     <Routes>
       <Route
@@ -59,7 +62,6 @@ const App = () => {
           !user ? (
             <Login onLogin={(u) => {
               setUser(u);
-              localStorage.setItem('loggedInUser', JSON.stringify(u));
             }} />
           ) : user.role === 'admin' ? (
             <Navigate to="/admin" />
@@ -76,7 +78,6 @@ const App = () => {
             selectedTruck ? (
               <DailyEntryForm
                 truck={selectedTruck}
-                user={user}
                 onChooseAnotherTruck={() => setSelectedTruck(null)}
                 onLogout={handleLogout}
               />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from './supabaseClient';
+import { api } from './api';
 import './TruckSelector.css';
 
 const TruckSelector = ({ onSelect }) => {
@@ -7,11 +7,11 @@ const TruckSelector = ({ onSelect }) => {
 
   useEffect(() => {
     const fetchTrucks = async () => {
-      const { data, error } = await supabase.from('trucks').select('*');
-      if (error) {
+      try {
+        const { trucks: rows } = await api.trucks();
+        setTrucks(rows || []);
+      } catch (error) {
         console.error('Kļūda iegūstot kravas auto sarakstu:', error.message);
-      } else {
-        setTrucks(data || []);
       }
     };
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
-import bcrypt from 'bcryptjs';
+import { api } from './api';
 import logo from './assets/AB Buss.png';
 import './Login.css';
 
@@ -18,30 +17,13 @@ function Login({ onLogin }) {
       return;
     }
 
-    const { data: usersData, error } = await supabase.from('users').select('*');
-
-    if (error || !usersData) {
-      setError('Nevar ielādēt lietotājus.');
-      return;
+    try {
+      const { user } = await api.login(username, password);
+      onLogin(user);
+      navigate(user.role === 'admin' ? '/admin' : '/select-truck');
+    } catch (loginError) {
+      setError(loginError.message);
     }
-
-    const user = usersData.find(u => u.username.toLowerCase() === username.toLowerCase());
-    if (!user) {
-      setError('Nepareizs lietotājvārds vai parole');
-      return;
-    }
-
-    // Tikai hash pārbaude
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      setError('Nepareizs lietotājvārds vai parole');
-      return;
-    }
-
-    localStorage.setItem('loggedInUser', JSON.stringify(user));
-    onLogin(user);
-    navigate(user.role === 'admin' ? '/admin' : '/select-truck');
   };
 
   const handleUsernameKeyDown = (e) => {

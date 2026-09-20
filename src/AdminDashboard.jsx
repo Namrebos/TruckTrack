@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import { supabase } from './supabaseClient';
+import { api } from './api';
 import './AdminDashboard.css';
 
 function getMonthName(monthIndex) {
@@ -15,25 +15,20 @@ function getMonthName(monthIndex) {
 
 export default function AdminDashboard({ onLogout }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [entries, setEntries] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [activeTab, setActiveTab] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('loggedInUser'));
-    if (!storedUser || storedUser.role !== 'admin') {
-      navigate('/');
-    } else {
-      setUser(storedUser);
-      fetchData();
-    }
+    fetchData().catch(() => navigate('/'));
   }, []);
 
   const fetchData = async () => {
-    const { data: trucksData } = await supabase.from('trucks').select('*');
-    const { data: entriesData } = await supabase.from('entries').select('*');
+    const [{ trucks: trucksData }, { entries: entriesData }] = await Promise.all([
+      api.trucks(),
+      api.entries(),
+    ]);
 
     setTrucks(trucksData || []);
     if (trucksData && trucksData.length > 0) {

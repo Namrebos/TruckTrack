@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { api } from './api';
 import Confirmation from './Confirmation';
 import './DailyEntryForm.css';
 
-const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
+const DailyEntryForm = ({ truck, onChooseAnotherTruck, onLogout }) => {
   const [odometer, setOdometer] = useState('');
   const [fuel, setFuel] = useState('');
   const [drivenKm, setDrivenKm] = useState(null);
@@ -16,17 +16,12 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
   useEffect(() => {
     const fetchEntries = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('entries')
-        .select('*')
-        .eq('truck', truck)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('❌ Neizdevās ielādēt ierakstus no Supabase:', error.message);
-      } else {
-        const lastEntry = data[data.length - 1];
+      try {
+        const { entries } = await api.entries(truck);
+        const lastEntry = entries[entries.length - 1];
         setLastOdometer(lastEntry ? Number(lastEntry.odometer) : 0);
+      } catch (error) {
+        console.error('❌ Neizdevās ielādēt ierakstus:', error.message);
       }
       setLoading(false);
     };
@@ -50,32 +45,21 @@ const DailyEntryForm = ({ truck, user, onChooseAnotherTruck, onLogout }) => {
 
     const entry = {
       truck,
-      user: user.username,
-      driver: capitalize(user.username),
       date,
       odometer: parseInt(odometer, 10),
       fuel: parseInt(fuel, 10) || 0
     };
 
-    const { error } = await supabase.from('entries').insert([entry]);
-
-    if (error) {
+    try {
+      await api.addEntry(entry);
+    } catch (error) {
       console.error('❌ Ieraksta saglabāšana neizdevās:', error.message);
-      alert('Neizdevās saglabāt datus. Mēģini vēlreiz!');
+      alert(error.message);
       return;
     }
 
     setDrivenKm(kmToday > 0 ? kmToday : 0);
     setShowConfirmation(true);
-  };
-
-  const capitalize = (name) => {
-    const mapping = {
-      andris: 'Andris',
-      janis: 'Jānis',
-      didzis: 'Didzis'
-    };
-    return mapping[name.toLowerCase()] || name;
   };
 
   if (showConfirmation) {

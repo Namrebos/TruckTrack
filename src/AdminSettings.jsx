@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { api } from './api';
 import { useNavigate } from 'react-router-dom';
-import bcrypt from 'bcryptjs';
 import './AdminSettings.css';
 
 function AdminSettings() {
@@ -12,81 +11,77 @@ function AdminSettings() {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('driver');
+  const [passwordDrafts, setPasswordDrafts] = useState({});
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
-    if (!loggedInUser || loggedInUser.role !== 'admin') {
-      navigate('/');
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    fetchTrucks();
-    fetchUsers();
+    Promise.all([fetchTrucks(), fetchUsers()]).catch(() => navigate('/'));
   }, []);
 
   const fetchTrucks = async () => {
-    const { data, error } = await supabase.from('trucks').select('*');
-    if (!error) setTrucks(data || []);
+    const { trucks: rows } = await api.trucks();
+    setTrucks(rows || []);
   };
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase.from('users').select('*');
-    if (!error) setUsers(data || []);
+    const { users: rows } = await api.users();
+    setUsers(rows || []);
   };
 
   const addTruck = async () => {
     if (!newTruck) return;
-    const { error } = await supabase.from('trucks').insert([{ name: newTruck, color: truckColor }]);
-    if (!error) {
+    try {
+      await api.addTruck(newTruck, truckColor);
       setNewTruck('');
       setTruckColor('#cccccc');
-      fetchTrucks();
+      await fetchTrucks();
+    } catch (error) {
+      alert(error.message);
     }
   };
 
   const deleteTruck = async (truckName) => {
-    const { error } = await supabase.from('trucks').delete().eq('name', truckName);
-    if (!error) fetchTrucks();
+    try {
+      await api.deleteTruck(truckName);
+      await fetchTrucks();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const addUser = async () => {
     if (!newUsername || !newPassword) return;
 
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(newPassword, salt);
-
-    const { error } = await supabase.from('users').insert([
-      { username: newUsername, password: hashedPassword, role: newRole }
-    ]);
-
-    if (!error) {
+    try {
+      await api.addUser({ username: newUsername, password: newPassword, role: newRole });
       setNewUsername('');
       setNewPassword('');
       setNewRole('driver');
-      fetchUsers();
+      await fetchUsers();
+    } catch (error) {
+      alert(error.message);
     }
   };
 
-  const deleteUser = async (username) => {
-    const { error } = await supabase.from('users').delete().eq('username', username);
-    if (!error) fetchUsers();
+  const deleteUser = async (id) => {
+    try {
+      await api.deleteUser(id);
+      await fetchUsers();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
-  const updateUserPassword = async (username, newPassword) => {
+  const updateUserPassword = async (id, newPassword) => {
     if (!newPassword) return;
-
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(newPassword, salt);
-
-    const { error } = await supabase
-      .from('users')
-      .update({ password: hashedPassword })
-      .eq('username', username);
-
-    if (!error) fetchUsers();
+    try {
+      await api.updatePassword(id, newPassword);
+      setPasswordDrafts((drafts) => ({ ...drafts, [id]: '' }));
+      await fetchUsers();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
@@ -162,18 +157,19 @@ function AdminSettings() {
                   type="password"
                   className="admin-input short"
                   placeholder="Jauna parole"
-                  onChange={(e) => user.newPassword = e.target.value}
+                  value={passwordDrafts[user.id] || ''}
+                  onChange={(e) => setPasswordDrafts((drafts) => ({ ...drafts, [user.id]: e.target.value }))}
                 />
                 <button
                   className="green-btn"
-                  onClick={() => updateUserPassword(user.username, user.newPassword)}
+                  onClick={() => updateUserPassword(user.id, passwordDrafts[user.id])}
                 >
                   Mainīt paroli
                 </button>
                 {!(user.role === 'admin' && users.filter(u => u.role === 'admin').length === 1) && (
                   <button
                     className="red-btn"
-                    onClick={() => deleteUser(user.username)}
+                    onClick={() => deleteUser(user.id)}
                   >
                     Dzēst
                   </button>
