@@ -57,7 +57,7 @@ export default async function handler(request, response) {
 
     if (method === 'GET' && path === '/trucks') {
       await requireUser(request);
-      return send(response, 200, { trucks: await sql`select id, name, color from trucks order by name` });
+      return send(response, 200, { trucks: await sql`select id, name, color from trucks order by id` });
     }
 
     if (method === 'POST' && path === '/trucks') {
