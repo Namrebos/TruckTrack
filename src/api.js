@@ -4,8 +4,12 @@ async function request(path, options = {}) {
     ...options,
     headers: { 'Content-Type': 'application/json', ...options.headers },
   });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || 'Pieprasījums neizdevās.');
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Servera API nav pieejams (${response.status}).`);
+  }
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || `Pieprasījums neizdevās (${response.status}).`);
   return payload;
 }
 
